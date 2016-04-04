@@ -34,9 +34,13 @@ gem 'devise'
 gem 'bower-rails'
 gem 'faker'
 
+gem "angular-rails-templates"
+gem "sprockets", "~> 2.0"
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug'
+  gem 'rspec-rails', '~> 3.0'
 end
 
 group :development do

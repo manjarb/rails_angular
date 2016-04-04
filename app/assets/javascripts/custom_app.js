@@ -1,6 +1,20 @@
-var app = angular.module('customers',[]);
+var app = angular.module('customers',['ngRoute','templates']);
 
-app.controller("CustomerSearchController", [ "$scope","$http", function($scope,$http) {
+app.config(["$routeProvider",
+    function($routeProvider){
+
+        $routeProvider.when("/",{
+            controller: "CustomerSearchController",
+            templateUrl: "customer_search.html"
+        }).when("/:id",{
+            controller: "CustomerDetailController",
+            templateUrl: "customer_detail.html"
+        });
+
+    }
+]);
+
+app.controller("CustomerSearchController", [ "$scope","$http","$location", function($scope,$http,$location) {
 
     var page = 0;
 
@@ -11,29 +25,6 @@ app.controller("CustomerSearchController", [ "$scope","$http", function($scope,$
             return
         }
 
-        //$scope.customers = [
-        //    {
-        //        "first_name":"Schuyler",
-        //        "last_name":"Cremin",
-        //        "email":"giles0@macgyver.net",
-        //        "username":"jillian0",
-        //        "created_at":"2015-03-04"
-        //    },
-        //    {
-        //        "first_name":"Derick",
-        //        "last_name":"Ebert",
-        //        "email":"lupe1@rennerfisher.org",
-        //        "username":"ubaldo_kaulke1",
-        //        "created_at":"2015-03-04"
-        //    },
-        //    {
-        //        "first_name":"Derick",
-        //        "last_name":"Johnsons",
-        //        "email":"dj@somewhere.org",
-        //        "username":"djj",
-        //        "created_at":"2015-03-04"
-        //    }
-        //]
         $http.get("/customers.json",
             { "params": { "keywords": searchTerm, "page": page } }
         ).then(function(response) {
@@ -56,5 +47,41 @@ app.controller("CustomerSearchController", [ "$scope","$http", function($scope,$
         $scope.search($scope.keywords);
     }
 
+    $scope.viewDetails = function(customer) {
+        $location.path("/" + customer.id);
+    }
+
 
 }]);
+
+app.controller("CustomerDetailController", [ "$scope","$http","$routeParams", function($scope , $http , $routeParams) {
+    // Make the Ajax call and set $scope.customer...
+    var customerId = $routeParams.id;
+    $scope.customer = {};
+
+    $http.get(
+        "/customers/" + customerId + ".json"
+    ).then(function(response) {
+            $scope.customer = response.data;
+        },function(response) {
+            alert("There was a problem: " + response.status);
+        }
+    );
+
+}]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
