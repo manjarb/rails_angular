@@ -3,4 +3,6 @@ asset 'bootstrap-sass-official'
 # END_HIGHLIGHT
 asset 'angular', '~> 1.5'
 asset 'angular-route'
+asset 'angular-mocks'
+asset 'angular-resource'
 resolution 'angular', '1.5'

@@ -17,30 +17,28 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <label class="sr-only" for="first-name">First Name</label>
-                        <input type="text" class="form-control"
-                               name="first-name" value="Bob">
+                        <input type="text" class="form-control" name="first-name" ng-model="customer.first_name">
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="form-group">
                         <label class="sr-only" for="last-name">Last Name</label>
                         <input type="text" class="form-control"
-                                    name="last-name" value="Jones">
+                               name="last-name" ng-model="customer.last_name">
                     </div>
                 </div>
                     <div class="col-md-4"> <div class="form-group">
                         <label class="sr-only" for="username">Username</label>
-                        <input type="text" class="form-control"
-                               name="username" value="bobert123">
+                        <input type="text" class="form-control" name="username" ng-model="customer.username">
                     </div>
                 </div>
             </div>
             <div class="form-group">
                 <label class="sr-only" for="email">Email</label>
                 <input type="text" class="form-control"
-                       name="email" value="bobbyj@somewhere.net">
+                       name="email" ng-model="customer.email">
                 <label for="joined">Joined</label>
-                12/13/2014
+                {{ customer.joined_at | date }}
             </div>
             <h2>Shipping Address</h2>
             <div class="form-group">
@@ -80,22 +78,38 @@
         </div>
         <div class="col-md-6">
             <h1>Billing Info</h1>
-            <div class="row">
-                <div class="col-md-7">
-                    <p>
-                        ****-****-****-1234
-                        <span class="label label-success">VISA</span>
-                    </p>
-                    <p>
-                        <label>Expires:</label> 04/19
-                    </p>
-                </div>
+            <article ng-controller="CustomerCreditCardController"
+                     ng-init="setCardholderId(customerId)">
+                <div class="row">
+                    <div ng-if="!creditCard.$resolved">
+                        <!-- loading animation will go here -->
+                        <aside class="progress">
+                            <div class="progress-bar progress-bar-striped active" style="width: 100%">
+                                Loading...
+                            </div>
+                        </aside>
+                    </div>
+                    <div ng-if="creditCard.$resolved">
+                        <!-- Credit Card info component -->
+                    </div>
 
-                <div class="col-md-5 text-right">
-                    <button class="btn btn-lg btn-default"> View Details...
-                    </button>
+                    <div class="col-md-7">
+                        <p>
+                            ****-****-****-{{creditCard.lastFour}}
+                            <span class="label label-success">{{creditCard.cardType}}</span>
+                        </p>
+                        <p>
+                            <label>Expires:</label> {{creditCard.expirationMonth}}/{{creditCard.expirationYear}}
+                        </p>
+                    </div>
+
+                    <div class="col-md-5 text-right">
+                        <a href="{{creditCard.detailsLink}}"
+                           class="btn btn-lg btn-default"> View Details...
+                        </a>
+                    </div>
                 </div>
-            </div>
+            </article>
             <h3>Billing Address <input type="checkbox"> Same as shipping? </h3>
             <div class="form-group">
                 <label class="sr-only" for="street-address"> Street Address </label>

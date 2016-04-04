@@ -29,6 +29,22 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 SET search_path = public, pg_catalog;
 
+--
+-- Name: refresh_customer_details(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION refresh_customer_details() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+      BEGIN
+        REFRESH MATERIALIZED VIEW CONCURRENTLY customer_details;
+        RETURN NULL;
+      EXCEPTION
+        WHEN feature_not_supported THEN
+          RETURN NULL;
+      END $$;
+
+
 SET default_tablespace = '';
 
 SET default_with_oids = false;
@@ -92,6 +108,60 @@ CREATE TABLE customers_billing_addresses (
 
 
 --
+-- Name: customers_shipping_addresses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE customers_shipping_addresses (
+    id integer NOT NULL,
+    customer_id integer NOT NULL,
+    address_id integer NOT NULL,
+    "primary" boolean DEFAULT false NOT NULL
+);
+
+
+--
+-- Name: states; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE states (
+    id integer NOT NULL,
+    code character varying NOT NULL,
+    name character varying NOT NULL
+);
+
+
+--
+-- Name: customer_details; Type: MATERIALIZED VIEW; Schema: public; Owner: -
+--
+
+CREATE MATERIALIZED VIEW customer_details AS
+ SELECT customers.id AS customer_id,
+    customers.first_name,
+    customers.last_name,
+    customers.email,
+    customers.username,
+    customers.created_at AS joined_at,
+    billing_address.id AS billing_address_id,
+    billing_address.street AS billing_street,
+    billing_address.city AS billing_city,
+    billing_state.code AS billing_state,
+    billing_address.zipcode AS billing_zipcode,
+    shipping_address.id AS shipping_address_id,
+    shipping_address.street AS shipping_street,
+    shipping_address.city AS shipping_city,
+    shipping_state.code AS shipping_state,
+    shipping_address.zipcode AS shipping_zipcode
+   FROM ((((((customers
+     JOIN customers_billing_addresses ON ((customers.id = customers_billing_addresses.customer_id)))
+     JOIN addresses billing_address ON ((billing_address.id = customers_billing_addresses.address_id)))
+     JOIN states billing_state ON ((billing_address.state_id = billing_state.id)))
+     JOIN customers_shipping_addresses ON (((customers.id = customers_shipping_addresses.customer_id) AND (customers_shipping_addresses."primary" = true))))
+     JOIN addresses shipping_address ON ((shipping_address.id = customers_shipping_addresses.address_id)))
+     JOIN states shipping_state ON ((shipping_address.state_id = shipping_state.id)))
+  WITH NO DATA;
+
+
+--
 -- Name: customers_billing_addresses_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -130,18 +200,6 @@ ALTER SEQUENCE customers_id_seq OWNED BY customers.id;
 
 
 --
--- Name: customers_shipping_addresses; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE customers_shipping_addresses (
-    id integer NOT NULL,
-    customer_id integer NOT NULL,
-    address_id integer NOT NULL,
-    "primary" boolean DEFAULT false NOT NULL
-);
-
-
---
 -- Name: customers_shipping_addresses_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -166,17 +224,6 @@ ALTER SEQUENCE customers_shipping_addresses_id_seq OWNED BY customers_shipping_a
 
 CREATE TABLE schema_migrations (
     version character varying NOT NULL
-);
-
-
---
--- Name: states; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE states (
-    id integer NOT NULL,
-    code character varying NOT NULL,
-    name character varying NOT NULL
 );
 
 
@@ -331,6 +378,13 @@ ALTER TABLE ONLY users
 
 
 --
+-- Name: customer_details_customer_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX customer_details_customer_id ON customer_details USING btree (customer_id);
+
+
+--
 -- Name: customers_lower_email; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -387,6 +441,34 @@ CREATE UNIQUE INDEX unique_schema_migrations ON schema_migrations USING btree (v
 
 
 --
+-- Name: refresh_customer_details; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER refresh_customer_details AFTER INSERT OR DELETE OR UPDATE ON customers FOR EACH STATEMENT EXECUTE PROCEDURE refresh_customer_details();
+
+
+--
+-- Name: refresh_customer_details; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER refresh_customer_details AFTER INSERT OR DELETE OR UPDATE ON customers_shipping_addresses FOR EACH STATEMENT EXECUTE PROCEDURE refresh_customer_details();
+
+
+--
+-- Name: refresh_customer_details; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER refresh_customer_details AFTER INSERT OR DELETE OR UPDATE ON customers_billing_addresses FOR EACH STATEMENT EXECUTE PROCEDURE refresh_customer_details();
+
+
+--
+-- Name: refresh_customer_details; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER refresh_customer_details AFTER INSERT OR DELETE OR UPDATE ON addresses FOR EACH STATEMENT EXECUTE PROCEDURE refresh_customer_details();
+
+
+--
 -- PostgreSQL database dump complete
 --
 
@@ -401,4 +483,8 @@ INSERT INTO schema_migrations (version) VALUES ('20160314175018');
 INSERT INTO schema_migrations (version) VALUES ('20160314182038');
 
 INSERT INTO schema_migrations (version) VALUES ('20160404101910');
+
+INSERT INTO schema_migrations (version) VALUES ('20160404115255');
+
+INSERT INTO schema_migrations (version) VALUES ('20160404121444');
 

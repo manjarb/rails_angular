@@ -1,4 +1,4 @@
-var app = angular.module('customers',['ngRoute','templates']);
+var app = angular.module('customers',['ngRoute','ngResource','templates']);
 
 app.config(["$routeProvider",
     function($routeProvider){
@@ -54,21 +54,31 @@ app.controller("CustomerSearchController", [ "$scope","$http","$location", funct
 
 }]);
 
-app.controller("CustomerDetailController", [ "$scope","$http","$routeParams", function($scope , $http , $routeParams) {
+app.controller("CustomerDetailController", [ "$scope","$http","$routeParams","$resource", function($scope , $http , $routeParams,$resource) {
     // Make the Ajax call and set $scope.customer...
     var customerId = $routeParams.id;
-    $scope.customer = {};
+    var Customer = $resource('/customers/:customerId.json');
+    $scope.customer = Customer.get({ "customerId": customerId});
 
-    $http.get(
-        "/customers/" + customerId + ".json"
-    ).then(function(response) {
-            $scope.customer = response.data;
-        },function(response) {
-            alert("There was a problem: " + response.status);
-        }
-    );
+    //$http.get(
+    //    "/customers/" + customerId + ".json"
+    //).then(function(response) {
+    //        $scope.customer = response.data;
+    //    },function(response) {
+    //        alert("There was a problem: " + response.status);
+    //    }
+    //);
 
 }]);
+
+app.controller("CustomerCreditCardController", [ "$scope","$resource",
+    function($scope , $resource) {
+        var CreditCardInfo = $resource('/fake_billing.json');
+        $scope.setCardholderId = function(cardholderId) {
+            $scope.creditCard = CreditCardInfo.get({"cardholder_id": cardholderId});
+        }
+    }
+]);
 
 
 
